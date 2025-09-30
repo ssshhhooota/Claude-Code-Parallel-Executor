@@ -1,118 +1,156 @@
 # Claude Code Parallel Executor
 
-## 概要
+> 🚀 複数の Claude Code インスタンスを tmux 上で並列実行し、効率的なタスク分散処理を実現するツール
 
-Claude Code Parallel Executor は、tmux を使用して複数の Claude Code インスタンスを並列実行し、タスクを効率的に分散処理するツールです。1 つのマネージャーが複数のワーカーにタスクを割り当て、並列処理を行うことで作業効率を大幅に向上させます。
+## 🎯 概要
 
-## 機能
+Claude Code Parallel Executor は、1つのマネージャーが複数のワーカーを管理・調整することで、大規模なタスクを並列処理できるシステムです。tmux セッション内で動作し、Claude Code の能力を最大限に活用します。
 
-- **並列処理**: 複数の Claude Code ワーカーによる同時タスク実行
-- **タスク管理**: マネージャーによる作業の分配と進捗管理
-- **リアルタイム通信**: ワーカー間でのメッセージ送受信
-- **作業報告**: 各ワーカーの作業結果を自動的に収集・レポート
-- **tmux 統合**: tmux セッションによる効率的なターミナル管理
+## ✨ 主要機能
 
-## ディレクトリ構成
+- 🔄 **並列処理**: 複数の Claude Code ワーカーによる同時タスク実行
+- 🎯 **タスク管理**: マネージャーによる作業の分配と進捗管理
+- 💬 **リアルタイム通信**: ワーカー間でのメッセージ送受信
+- 📊 **作業報告**: 各ワーカーの作業結果を自動的に収集・レポート
+- 🖥️ **tmux 統合**: tmux セッションによる効率的なターミナル管理
+
+## 📁 ディレクトリ構成
 
 ```
 Claude-Code-Parallel-Executor/
-├── .claude/
+├── .claude/                    # Claude Code 設定
 │   └── commands/
-│       └── parallel.md      # 並列実行コマンド定義
-├── instructions/          # 指示書ファイル
-│   ├── manager.md         # マネージャー用指示書
-│   ├── worker.md          # ワーカー用指示書
-│   └── tmux.md    # tmux使用例
-├── scripts/               # 実行スクリプト
-│   ├── prepare-environment.sh    # 環境構築スクリプト
-│   ├── send-message.sh           # メッセージ送信スクリプト
-│   ├── instructions-to-workers.sh # ワーカーへの指示送信
-│   └── report-to-manager.sh      # マネージャーへの報告
-└── tmp/                   # 一時ファイル・作業結果
+│       └── parallel.md         # /parallel コマンド定義
+├── instructions/               # 指示書ファイル
+│   ├── manager.md              # マネージャー用指示書
+│   ├── worker.md               # ワーカー用指示書
+│   └── tmux.md                 # tmux 使用例
+├── scripts/                    # 実行スクリプト
+│   ├── create-worker.sh        # ワーカー作成
+│   ├── delete-worker.sh        # ワーカー削除
+│   ├── list-worker.sh          # ワーカー一覧表示
+│   └── send-message.sh         # メッセージ送信
+├── tmp/                        # 一時ファイル・作業結果
+│   └── <ユニークID>/
+│       ├── worker[N].md        # 各ワーカーの作業記録
+│       └── summary.md          # 最終報告書
+└── CLAUDE.md                   # プロジェクト指示書
 ```
 
-## 使用方法
+## 🚀 クイックスタート
 
-### 1. 環境構築
-
-tmux で session を作成して、session 内で claude code を起動してください。
+### 1. 環境準備
 
 ```bash
-tmux
-claude
+# tmux セッション作成 & Claude Code 起動
+tmux new-session -d -s parallel-work
+tmux send-keys -t parallel-work "claude" C-m
+tmux attach -t parallel-work
 ```
 
-### 3. タスク遂行のための指示
+### 2. 並列実行の開始
 
-```bash:claude
-/parallel <タスク内容>
+Claude Code 内で以下のコマンドを実行：
+
+```bash
+/parallel <実行したいタスク内容>
 ```
 
-## マネージャーとワーカーの役割
+例：
+```bash
+/parallel プロジェクト内の全てのJavaScriptファイルをリファクタリングして、ESLintエラーを修正する
+```
 
-### マネージャーの役割
+## 🏗️ システム構成
 
-- マネージャーパネルから各ワーカーにタスクを指示
-- 進捗管理と作業調整
+### 🎭 マネージャーの役割
+- タスクの分析・分解
+- ワーカーへの作業指示
+- 進捗監視・調整
 - 最終報告の作成
 
-### ワーカーの役割
-
+### 👷 ワーカーの役割
 - 割り当てられたタスクの実行
-- 作業結果の記録
-- マネージャーへの報告
+- 作業進捗の報告
+- 成果物の記録・保存
 
-## 主要スクリプト
+## 🔧 主要スクリプト
 
-### prepare-environment.sh
+### ワーカー管理
 
 ```bash
-./scripts/prepare-environment.sh <ワーカー数> <ユニークID>
+# ワーカー作成（指定数のワーカーパネルを作成）
+./scripts/create-worker.sh <ワーカー数> <ユニークID>
+
+# ワーカー一覧表示
+./scripts/list-worker.sh
+
+# 全ワーカー削除
+./scripts/delete-worker.sh
 ```
 
-指定された数のワーカーパネルを持つ tmux セッションを作成します。
-
-### send-message.sh
+### メッセージ送信
 
 ```bash
+# 指定パネルにメッセージ送信
 ./scripts/send-message.sh <パネルインデックス> "<メッセージ>"
 ```
 
-指定されたパネルにメッセージを送信します。
-
-## パネル操作
-
-### パネルインデックスの取得
+## 📊 パネル操作・情報取得
 
 ```bash
 # ワーカーのパネルインデックス取得
-tmux list-panes -F "#{pane_index} #{pane_title}" | grep worker | awk '{print $1}'
+tmux list-panes -F "#{pane_index} #{pane_title}" | grep worker
 
 # マネージャーのパネルインデックス取得
-tmux list-panes -F "#{pane_index} #{pane_title}" | grep manager | awk '{print $1}'
+tmux list-panes -F "#{pane_index} #{pane_title}" | grep manager
 
-# 自分のパネルインデックス取得
+# 現在のパネルインデックス取得
 tmux display-message -p "#{pane_index}"
+
+# 全パネル一覧表示
+tmux list-panes -F "#{pane_index} #{pane_title}"
 ```
 
-## 作業報告
+## 📋 作業結果・レポート
 
-- 各ワーカーは作業完了後、`tmp/<ユニークID>/`ディレクトリに結果を記録
-- マネージャーは最終的に`summary.md`に全体の報告をまとめ
+各実行では `tmp/<ユニークID>/` ディレクトリに以下が生成されます：
 
-## 利用例
+- `worker[N].md`: 各ワーカーの詳細な作業記録
+- `summary.md`: マネージャーによる全体の最終報告
 
-1. 大規模なコードベースのリファクタリング
-2. 複数ファイルの同時編集・テスト
-3. 並列データ処理タスク
-4. ドキュメント生成の分散処理
+## 💡 活用例
 
-## 必要な環境
+- 🔄 **大規模リファクタリング**: 複数ファイルの同時改修
+- 🧪 **テスト作成**: 各機能のテストを並列作成
+- 📚 **ドキュメント生成**: API ドキュメントの分散生成
+- 🎨 **コード品質改善**: ESLint/Prettier の一括適用
+- 🔍 **コードレビュー**: 複数モジュールの同時レビュー
 
-- tmux
-- Claude Code CLI
-- Bash shell
+## 🛠️ 必要な環境
 
-## ライセンス
+- **tmux**: セッション管理
+- **Claude Code CLI**: AI アシスタント
+- **Bash**: スクリプト実行環境
 
-This project is licensed under the MIT License.
+## 🎮 使用方法の詳細
+
+### 基本フロー
+
+1. **タスク受信**: `/parallel` コマンドでタスクを指定
+2. **タスク分解**: マネージャーがタスクを分析・分割
+3. **ワーカー作成**: 必要数のワーカーパネルを自動生成
+4. **作業実行**: 各ワーカーが並列でタスクを実行
+5. **進捗管理**: マネージャーが全体の進捗を監視
+6. **結果統合**: 完了後、結果をまとめて報告
+
+### マネージャーとワーカーの通信
+
+ワーカーからマネージャーへの報告：
+```bash
+scripts/send-message.sh $(tmux list-panes -F "#{pane_index} #{pane_title}" | grep manager | awk '{print $1}') "Worker1: タスク完了しました"
+```
+
+## 📄 ライセンス
+
+MIT License
